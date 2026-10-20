@@ -34,8 +34,11 @@ function formatValue(obs: Observation) {
 }
 
 function formatRange(obs: Observation) {
-  if (obs.ref_low == null && obs.ref_high == null) return ''
-  return `${obs.ref_low ?? ''}–${obs.ref_high ?? ''}`
+  const { ref_low: low, ref_high: high } = obs
+  if (low != null && high != null) return `${low}–${high}`
+  if (high != null) return `≤ ${high}`
+  if (low != null) return `≥ ${low}`
+  return ''
 }
 </script>
 
@@ -73,14 +76,3 @@ function formatRange(obs: Observation) {
   </section>
 </template>
 
-<style scoped>
-table {
-  border-collapse: collapse;
-}
-th,
-td {
-  border-bottom: 1px solid #ddd;
-  padding: 0.25rem 0.5rem;
-  text-align: left;
-}
-</style>

@@ -28,8 +28,9 @@ backend/                    Django 5.2 LTS + Django REST Framework
     management/commands/    export_fhir, migrate_fhir, verify_fhir, delete_fhir_export
   patients/                 the internal service: Patient, Observation + REST API
 frontend/                   Vue 3 + Vite + TypeScript
-  src/components/PatientList.vue          list (fetches its own data)
-  src/components/PatientObservations.vue  one patient's observations
+  src/App.vue                             page, global styles and the observations modal
+  src/components/PatientList.vue          patient table (fetches its own data)
+  src/components/PatientObservations.vue  one patient's observations table
   src/useFetch.ts                         shared, abortable fetch
 ```
 

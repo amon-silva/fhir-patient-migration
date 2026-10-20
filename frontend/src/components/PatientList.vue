@@ -12,13 +12,12 @@ export interface PatientSummary {
   observation_count: number
 }
 
-defineProps<{ selectedId: number | null }>()
 const emit = defineEmits<{ select: [id: number] }>()
 
 const { data: patients, error, loading } = useFetch<PatientSummary[]>('/api/patients/')
 
 // Client-side only: the API still returns every patient.
-const onlyWithObservations = ref(true)
+const onlyWithObservations = ref(false)
 const visiblePatients = computed(() =>
   onlyWithObservations.value
     ? patients.value?.filter((patient) => patient.observation_count > 0)
@@ -37,39 +36,52 @@ const visiblePatients = computed(() =>
     <p v-if="loading">Loading…</p>
     <p v-else-if="error" role="alert">Could not load patients: {{ error }}</p>
     <p v-else-if="!patients?.length">
-      No patients yet. Run <code>python manage.py migrate_fhir</code> in the backend.
+      No patients yet.
     </p>
     <p v-else-if="!visiblePatients?.length">No patients with observations.</p>
-    <ul v-else>
-      <li v-for="patient in visiblePatients" :key="patient.id">
-        <button
-          :aria-pressed="patient.id === selectedId"
-          @click="emit('select', patient.id)"
-        >
-          {{ patient.family_name || '(no family name)' }}, {{ patient.given_names }}
-        </button>
-        <small>
-          {{ patient.gender || 'unknown' }} · {{ patient.birth_date ?? 'no birth date' }} ·
-          {{ patient.observation_count }} obs
-        </small>
-      </li>
-    </ul>
+    <table v-else>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Gender</th>
+          <th>Birth date</th>
+          <th>Observations</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- The click on the name button bubbles up to the row, so the row is clickable and the name is keyboard-reachable. -->
+        <tr v-for="patient in visiblePatients" :key="patient.id" @click="emit('select', patient.id)">
+          <td>
+            <button aria-haspopup="dialog">
+              {{ patient.family_name || '(no family name)' }}, {{ patient.given_names }}
+            </button>
+          </td>
+          <td>{{ patient.gender || 'unknown' }}</td>
+          <td>{{ patient.birth_date ?? '—' }}</td>
+          <td>{{ patient.observation_count }}</td>
+        </tr>
+      </tbody>
+    </table>
   </section>
 </template>
 
 <style scoped>
-ul {
-  list-style: none;
-  padding: 0;
-}
-li {
-  margin-bottom: 0.5rem;
-}
-button {
-  display: block;
-  cursor: pointer;
-}
-button[aria-pressed='true'] {
-  font-weight: bold;
-}
+  tbody tr {
+    cursor: pointer;
+  }
+  button {
+    padding: 0;
+    border: none;
+    background: none;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+  button:hover {
+    color: var(--accent);
+    text-decoration: underline;
+  }
+  small {
+    opacity: 0.7;
+  }
 </style>
