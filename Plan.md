@@ -11,7 +11,7 @@ We will create four Django scripts:
 
 ### Export Script
 
-- **Export:** we will use `POST /$export` with `_type` set to Patient and Observation to export it to NDJSON format. Each type is sent as its own `_type` parameter, as the IG requires (never comma-delimited).
+- **Export:** we will use `POST /$export` with `_type` set to Patient and Observation to export it to NDJSON format. The types go in one comma-joined `_type` (`Patient,Observation`). The IG asks for one parameter per value, but HAPI, our target, only honours the first of several and silently drops the rest.
 - **Export failure:** the export request is retried with exponential backoff up to a maximum number of attempts, then marked `dead` in the audit table. A `dead` export can be retried by re-running the script manually.
 - **Progress status follow-up:** then we will poll the status URL with exponential backoff, waiting at least the `Retry-After` time sent by the server. Each poll logs `X-Progress` to stdout.
 - **Download:** the manifest may list several files per resource type. Each file (`output` data, `deleted` tombstones and `outcome` messages) is downloaded and tracked on its own in an audit table, with its resource type.

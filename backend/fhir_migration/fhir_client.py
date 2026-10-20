@@ -56,8 +56,12 @@ def with_retries[T](
 def kickoff(session: requests.Session, resource_types: str, since: datetime | None = None, ids_only: bool = False) -> str:
     """POST /$export and return the status (polling) URL."""
     parameters = [{"name": "_outputFormat", "valueString": "application/fhir+ndjson"}]
-    # The IG: repeat the parameter per value, never comma-delimit them in one.
-    parameters += [{"name": "_type", "valueString": t} for t in resource_types.split(",")]
+    # Comma-joined, although the IG asks for one parameter per value: HAPI only honours
+    # the first of several repeated `_type` parameters, so the other types are silently dropped.
+    parameters.append({"name": "_type", "valueString": resource_types})
+    # Production, against a provider that follows the IG: replace the line above with one
+    # parameter per value (never comma-delimited).
+    # parameters += [{"name": "_type", "valueString": t} for t in resource_types.split(",")]
     if since:
         parameters.append({"name": "_since", "valueInstant": since.isoformat()})
     if ids_only:

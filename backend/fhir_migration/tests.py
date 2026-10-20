@@ -106,13 +106,13 @@ class RetryTests(SimpleTestCase):
 
 
 class KickoffTests(SimpleTestCase):
-    def test_repeats_type_and_asks_only_for_ids(self):
+    def test_sends_every_type_in_one_parameter_and_asks_only_for_ids(self):
         session = mock.Mock()
         session.request.return_value = mock.Mock(status_code=202, headers={"Content-Location": "https://fhir.test/poll"})
         fhir_client.kickoff(session, "Patient,Observation", ids_only=True)
         parameters = session.request.call_args.kwargs["json"]["parameter"]
-        self.assertIn({"name": "_type", "valueString": "Patient"}, parameters)  # one per type, per the IG
-        self.assertIn({"name": "_type", "valueString": "Observation"}, parameters)
+        # HAPI drops all but the first of repeated `_type` parameters, so they go in one, comma-joined.
+        self.assertEqual([p for p in parameters if p["name"] == "_type"], [{"name": "_type", "valueString": "Patient,Observation"}])
         self.assertIn({"name": "_elements", "valueString": "id"}, parameters)
 
 

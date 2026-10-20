@@ -125,7 +125,7 @@ npx pyright
 There are 28 tests. They use synthetic in-code resources and mock the HTTP calls, so they never touch the network.
 
 - **Mapping:** official name, MR identifier, partial dates, a missing `status`, reference parsing.
-- **Kickoff:** one `_type` parameter per type, `_elements=id` for ID-only exports.
+- **Kickoff:** all types in one comma-joined `_type`, `_elements=id` for ID-only exports.
 - **Retry policy:** backoff, `Retry-After`, no retry on 4xx, giving up after the maximum number of attempts.
 - **Export:**
   - polling until ready, honouring `Retry-After`
@@ -168,6 +168,7 @@ There are 28 tests. They use synthetic in-code resources and mock the HTTP calls
 - **The ID-only export lives on the delta's job:** its files are `ExportFile`s of kind `ids`. The job's one `polling_url` stays the data export's (the Delete script needs it), so the ID-only export is `DELETE`d on the server right after its files are downloaded.
 - **Re-exports reuse the job:** a re-export of one type stays on the same `ExportJob`. It gets the new `polling_url`, and the files it replaces become `dead`. The first `transactionTime` is kept, because it's the safer `since` for the next delta.
 - **`SUBSETTED` resources** (many sandbox patients are stored in summary mode): the IG says an incomplete resource must not overwrite a complete one. So a `SUBSETTED` line creates the record if it's new and leaves an existing record alone.
+- **`_type` is comma-joined:** the IG asks for one `_type` parameter per value, but HAPI only honours the first of several. The other types are dropped, with no error and no `outcome` file, so an export would silently come back without Observations. A stricter provider may need the repeated form.
 - **HAPI ignores `_elements=id`:** it returns full resources. The reconcile only reads `id`, so it works either way.
 - **Comparing the manifest `count`:** the comparison is implemented, but HAPI doesn't send `count`. The check falls back to the line count of each file against the lines the chunks read.
 
