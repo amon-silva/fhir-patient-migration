@@ -66,6 +66,8 @@ Settings come from environment variables. For local development, copy `backend/.
 These are the Plan's four scripts, in order:
 
 ```bash
+cd backend && source .venv/bin/activate   # skip if you're already there with the venv active
+
 python manage.py export_fhir             # POST /$export, poll, download -> "Export 1"
 python manage.py migrate_fhir 1          # phase 1 patients -> verify -> phase 2 observations
 python manage.py verify_fhir 1           # full verification; lists issues by check
