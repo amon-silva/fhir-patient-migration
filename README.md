@@ -74,6 +74,8 @@ python manage.py verify_fhir 1           # full verification; lists issues by ch
 python manage.py delete_fhir_export 1    # DELETE on the server + remove local NDJSON
 ```
 
+The `1` after the command is the **export folder id**: the number `export_fhir` prints ("Export 1"), which is also the name of the export's folder, `backend/exports/1/`. In the table below it appears as `<export_folder_id>`.
+
 The export takes about 2 minutes, because the sandbox answers each poll with `Retry-After: 120` and the script honours it. Each step prints the next command to run.
 
 > **Test-only limit:** the sandbox is far too large to export in full, so the first export only asks for what changed in the last day (`TEST_ONLY_FIRST_EXPORT_WINDOW` in `export.py`, about 4–5k resources). In a real migration the first export is full (`since=None`).
@@ -84,13 +86,13 @@ The other flows from the Plan:
 
 | Command | Plan section |
 |---|---|
-| `export_fhir` (again), then `migrate_fhir <id>` | Delta export: `since` is the previous export's `transactionTime`. It also fetches, automatically, the ids the source still has (`_elements=id`), and the migration removes local records missing from that list |
+| `export_fhir` (again), then `migrate_fhir <export_folder_id>` | Delta export: `since` is the previous export's `transactionTime`. It also fetches, automatically, the ids the source still has (`_elements=id`), and the migration removes local records missing from that list |
 | `export_fhir` (after a failure) | Resumes the latest export if it's `dead`, `failed` or interrupted, from where it stopped |
-| `migrate_fhir <id>` (again) | Resume an unfinished run (pending/failed chunks), or re-run safely (upserts) |
-| `verify_fhir <id> [--type Patient]` | On-demand verification |
+| `migrate_fhir <export_folder_id>` (again) | Resume an unfinished run (pending/failed chunks), or re-run safely (upserts) |
+| `verify_fhir <export_folder_id> [--type Patient]` | On-demand verification |
 | `migrate_fhir --issues <verification_run_id>` | Re-process only the flagged lines |
 | `migrate_fhir --rollback <migration_run_id>` | Remove the rows a bad run wrote |
-| `delete_fhir_export <id> [--force]` | A completed export: refuses unless its latest migration completed and verification passes (`--force` skips that). An unfinished export can't be migrated, so it's deleted without checks |
+| `delete_fhir_export <export_folder_id> [--force]` | A completed export: refuses unless its latest migration completed and verification passes (`--force` skips that). An unfinished export can't be migrated, so it's deleted without checks |
 
 **What you'll see on the sandbox:** a few observations have no `status`, which FHIR requires (1..1). They're skipped as bad lines, their chunk is marked `failed`, and `verify_fhir` reports them as `bad_line` issues. Because of that, `delete_fhir_export` refuses until they're handled (or you pass `--force`). This is the Plan's "bad data that needs a mapping fix" path, working as intended.
 
