@@ -1,0 +1,15 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# Local data: even synthetic records stay out of git
+*.sqlite3
+*.ndjson
+backend/exports/
+
+# Local configuration (see backend/.env.example)
+.env
+
+# macOS
+.DS_Store

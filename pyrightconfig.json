@@ -1,0 +1,10 @@
+{
+  // Editor (Pylance) settings for the monorepo: use the backend's venv and see its apps as top-level packages.
+  "include": ["backend"],
+  "exclude": ["backend/.venv", "backend/**/migrations"],
+  "venvPath": "backend",
+  "venv": ".venv",
+  "extraPaths": ["backend"],
+  // django-stubs and DRF's stubs disagree with how ModelSerializer.Meta is meant to be written.
+  "reportIncompatibleVariableOverride": "none"
+}
