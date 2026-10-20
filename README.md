@@ -94,7 +94,7 @@ The other flows from the Plan:
 | `migrate_fhir --rollback <migration_run_id>` | Remove the rows a bad run wrote |
 | `delete_fhir_export <export_folder_id> [--force]` | A completed export: refuses unless its latest migration completed and verification passes (`--force` skips that). An unfinished export can't be migrated, so it's deleted without checks |
 
-**What you'll see on the sandbox:** a few observations have no `status`, which FHIR requires (1..1). They're skipped as bad lines, their chunk is marked `failed`, and `verify_fhir` reports them as `bad_line` issues. Because of that, `delete_fhir_export` refuses until they're handled (or you pass `--force`). This is the Plan's "bad data that needs a mapping fix" path, working as intended.
+**What you'll see on the sandbox:** a few observations have no `status`, which FHIR requires (1..1). They're migrated with status `unknown`, a valid value, so they aren't lost. A line that can't be mapped at all (invalid JSON, no `id`) is skipped instead: its chunk is marked `failed`, `verify_fhir` reports it as a `bad_line` issue, and `delete_fhir_export` refuses until it's handled (or you pass `--force`). After a mapping fix, `migrate_fhir --issues <verification_run_id>` re-processes just those lines. This is the Plan's "bad data that needs a mapping fix" path.
 
 ## Running the app
 
@@ -126,7 +126,7 @@ npx pyright
 
 There are 28 tests. They use synthetic in-code resources and mock the HTTP calls, so they never touch the network.
 
-- **Mapping:** official name, MR identifier, partial dates, a missing `status`, reference parsing.
+- **Mapping:** official name, MR identifier, partial dates, a missing `status` becoming `unknown`, reference parsing.
 - **Kickoff:** all types in one comma-joined `_type`, `_elements=id` for ID-only exports.
 - **Retry policy:** backoff, `Retry-After`, no retry on 4xx, giving up after the maximum number of attempts.
 - **Export:**
@@ -167,6 +167,7 @@ There are 28 tests. They use synthetic in-code resources and mock the HTTP calls
   - a skipped line shows up as a `bad_line` or `missing` issue
   - an orphan whose patient now exists shows up as `orphan_linkable`
   - other orphans count as explained: their subject isn't a Patient, or their patient is still missing
+- **A missing `status` becomes `unknown`:** FHIR requires `Observation.status` (1..1), but some sandbox observations lack it. `unknown` is a value of FHIR's observation status list, so the record is kept. The fact that the source had no status isn't recorded.
 - **The ID-only export lives on the delta's job:** its files are `ExportFile`s of kind `ids`. The job's one `polling_url` stays the data export's (the Delete script needs it), so the ID-only export is `DELETE`d on the server right after its files are downloaded.
 - **Re-exports reuse the job:** a re-export of one type stays on the same `ExportJob`. It gets the new `polling_url`, and the files it replaces become `dead`. The first `transactionTime` is kept, because it's the safer `since` for the next delta.
 - **`SUBSETTED` resources** (many sandbox patients are stored in summary mode): the IG says an incomplete resource must not overwrite a complete one. So a `SUBSETTED` line creates the record if it's new and leaves an existing record alone.

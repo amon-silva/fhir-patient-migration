@@ -30,7 +30,9 @@ def map_observation(resource: dict[str, Any]) -> dict[str, Any]:
     return {
         "fhir_id": resource["id"],
         "subject_reference": resource.get("subject", {}).get("reference", ""),
-        "status": resource["status"],
+        # Required by FHIR (1..1), but the sandbox has some without it. "unknown" is a valid
+        # value of the status list, so the record is kept instead of skipped.
+        "status": resource.get("status", "unknown"),
         "code_system": coding.get("system", ""),
         "code": coding.get("code", ""),
         "code_display": coding.get("display") or resource.get("code", {}).get("text", ""),

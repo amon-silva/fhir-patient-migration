@@ -74,10 +74,11 @@ class MappingTests(SimpleTestCase):
         self.assertEqual((fields["ref_low"], fields["ref_high"]), (150, 400))
         self.assertEqual(fields["effective_at"], datetime(2024, 1, 2, 14, tzinfo=timezone.utc))
 
-    def test_observation_without_status_is_rejected(self):
+    def test_observation_without_status_maps_to_unknown_but_needs_an_id(self):
         # FHIR requires Observation.status; the sandbox has a few without it.
+        self.assertEqual(map_observation({"id": "o2"})["status"], "unknown")
         with self.assertRaises(KeyError):
-            map_observation({"id": "o2"})
+            map_observation({"status": "final"})
 
     def test_patient_id_from_reference(self):
         self.assertEqual(patient_id_from_reference("Patient/1"), "1")
