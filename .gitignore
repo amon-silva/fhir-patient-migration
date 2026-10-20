@@ -5,6 +5,8 @@ __pycache__/
 
 # Local data: even synthetic records stay out of git
 *.sqlite3
+*.sqlite3-wal
+*.sqlite3-shm
 *.ndjson
 backend/exports/
 
